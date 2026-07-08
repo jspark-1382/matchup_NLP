@@ -1,7 +1,7 @@
 """pyannote.audio 기반 화자 분리 선택 실습.
 
 pyannote는 사전 훈련된 화자 분리 파이프라인을 사용합니다.
-Hugging Face 토큰이 필요할 수 있으며, 토큰은 코드에 직접 쓰지 말고 환경변수로 전달하세요.
+Hugging Face 캐시에 모델이 저장되어 있어 토큰으로 빠르게 로드합니다.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ DEFAULT_MODEL = "pyannote/speaker-diarization-3.1"
 def diarize_pyannote(
     audio_path: str | Path,
     hf_token: str | None = None,
-    model_name: str = DEFAULT_MODEL,
+    model_name: str | None = None,
 ) -> pd.DataFrame:
     """pyannote 파이프라인으로 화자 구간을 추출합니다.
 
@@ -41,9 +41,13 @@ def diarize_pyannote(
             "pip install -r requirements_optional.txt 를 실행해 주세요."
         ) from exc
 
-    pipeline = Pipeline.from_pretrained(model_name, token=token)
+    # Hugging Face 캐시에서 빠르게 로드 (이미 다운로드된 경우)
+    pipeline = Pipeline.from_pretrained(
+        model_name or DEFAULT_MODEL,
+        token=token
+    )
 
-    # torchcodec 미설치 대비: soundfile로 직접 로드하여 waveform dict 전달
+    # torchcodec 미설치 대비: soundfile으로 직접 로드하여 waveform dict 전달
     import torch
     import soundfile as sf
 
@@ -56,7 +60,7 @@ def diarize_pyannote(
     waveform = torch.from_numpy(audio_data)
     output = pipeline({"waveform": waveform, "sample_rate": sample_rate})
 
-    # pyannote 4.x: DiiarizeOutput → speaker_diarization 속성 사용
+    # pyannote 4.x: DiarizeOutput → speaker_diarization 속성 사용
     # pyannote 3.x: Annotation 직접 반환
     if hasattr(output, "speaker_diarization"):
         diarization = output.speaker_diarization
