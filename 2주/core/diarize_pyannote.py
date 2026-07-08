@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -41,7 +42,28 @@ def diarize_pyannote(
         ) from exc
 
     pipeline = Pipeline.from_pretrained(model_name, token=token)
-    diarization = pipeline(str(audio_path))
+
+    # torchcodec 미설치 대비: soundfile로 직접 로드하여 waveform dict 전달
+    import torch
+    import soundfile as sf
+
+    audio_data, sample_rate = sf.read(str(audio_path), dtype="float32")
+    # (samples,) -> (channels, samples) 변환
+    if audio_data.ndim == 1:
+        audio_data = audio_data[np.newaxis, :]
+    else:
+        audio_data = audio_data.T
+    waveform = torch.from_numpy(audio_data)
+    output = pipeline({"waveform": waveform, "sample_rate": sample_rate})
+
+    # pyannote 4.x: DiiarizeOutput → speaker_diarization 속성 사용
+    # pyannote 3.x: Annotation 직접 반환
+    if hasattr(output, "speaker_diarization"):
+        diarization = output.speaker_diarization
+    elif hasattr(output, "annotation"):
+        diarization = output.annotation
+    else:
+        diarization = output
 
     rows: list[dict[str, object]] = []
     for turn, _, speaker in diarization.itertracks(yield_label=True):
