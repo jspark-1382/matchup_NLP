@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.streamlit/
+outputs/
+*.log
+
+# opencode internal
+.codegraph/
+.omo/
