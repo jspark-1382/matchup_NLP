@@ -1,20 +1,19 @@
 """pyannote.audio 기반 화자 분리 선택 실습.
 
 pyannote는 사전 훈련된 화자 분리 파이프라인을 사용합니다.
-Hugging Face 캐시에 모델이 저장되어 있어 토큰으로 빠르게 로드합니다.
+모델은 models/ 폴더에 로컬로 저장되어 있어 토큰 없이 실행 가능합니다.
 """
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from dotenv import load_dotenv
 
 
-DEFAULT_MODEL = "pyannote/speaker-diarization-3.1"
+# 로컬 모델 경로 (models/ 폴더 내)
+LOCAL_MODEL_DIR = Path(__file__).parent.parent / "models" / "speaker-diarization-3.1"
 
 
 def diarize_pyannote(
@@ -26,12 +25,8 @@ def diarize_pyannote(
 
     반환 컬럼: start, end, speaker
     """
-    load_dotenv()
-    token = hf_token or os.getenv("HF_TOKEN")
-    if not token:
-        raise RuntimeError(
-            "HF_TOKEN이 없습니다. .env 파일 또는 환경변수에 Hugging Face 토큰을 설정해 주세요."
-        )
+    # 로컬 모델 경로 결정
+    local_path = Path(model_name) if model_name else LOCAL_MODEL_DIR
 
     try:
         from pyannote.audio import Pipeline
@@ -41,11 +36,21 @@ def diarize_pyannote(
             "pip install -r requirements_optional.txt 를 실행해 주세요."
         ) from exc
 
-    # Hugging Face 캐시에서 빠르게 로드 (이미 다운로드된 경우)
-    pipeline = Pipeline.from_pretrained(
-        model_name or DEFAULT_MODEL,
-        token=token
-    )
+    # 로컬 모델이 있으면 토큰 없이 로드, 없으면 HF Hub에서 로드
+    if local_path.exists():
+        pipeline = Pipeline.from_pretrained(str(local_path))
+    else:
+        # HF Hub에서 로드 (토큰 필요)
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+        token = hf_token or os.getenv("HF_TOKEN")
+        if not token:
+            raise RuntimeError(
+                "로컬 모델이 없고 HF_TOKEN도 설정되지 않았습니다. "
+                "models/ 폴더에 모델을 넣거나 .env 파일에 HF_TOKEN을 설정해 주세요."
+            )
+        pipeline = Pipeline.from_pretrained(model_name or "pyannote/speaker-diarization-3.1", token=token)
 
     # torchcodec 미설치 대비: soundfile으로 직접 로드하여 waveform dict 전달
     import torch
