@@ -40,7 +40,7 @@ def diarize_pyannote(
             "pip install -r requirements_optional.txt 를 실행해 주세요."
         ) from exc
 
-    pipeline = Pipeline.from_pretrained(model_name, use_auth_token=token)
+    pipeline = Pipeline.from_pretrained(model_name, token=token)
     diarization = pipeline(str(audio_path))
 
     rows: list[dict[str, object]] = []
