@@ -4,6 +4,7 @@ __pycache__/
 .env
 .streamlit/
 outputs/
+output/
 *.log
 
 # opencode internal
