@@ -2,7 +2,7 @@
 
 사용법:
     python exercises/06_diarized_stt_pipeline.py data/meeting_synthetic.wav --demo
-    python exercises/06_diarized_stt_pipeline.py real_meeting.wav --method kmeans
+    python exercises/06_diarized_stt_pipeline.py data/S00007846.wav --method kmeans
 """
 
 from __future__ import annotations

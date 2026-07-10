@@ -22,7 +22,7 @@ class TranscriptionResult:
 
 
 def _import_speech_recognition():
-    """speech_recognition을 지연 import합니다."""
+    """speech_recognition을 import합니다."""
     try:
         import speech_recognition as sr
     except ImportError as exc:
@@ -39,7 +39,6 @@ def transcribe_file(
     recognizer: "sr.Recognizer | None" = None,
 ) -> TranscriptionResult:
     """오디오 파일 하나를 텍스트로 변환합니다.
-
     Google Web Speech API를 호출하므로 인터넷 연결이 필요합니다.
     긴 회의 녹음은 한 번에 처리하기보다 구간별로 잘라 처리하는 것이 안정적입니다.
     """

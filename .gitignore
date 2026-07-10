@@ -5,6 +5,8 @@ __pycache__/
 .streamlit/
 outputs/
 output/
+uploaded_audio/
+models/
 *.log
 
 # opencode internal
